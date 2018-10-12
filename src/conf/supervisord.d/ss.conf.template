@@ -1,0 +1,7 @@
+[program:ss-PORT]
+command = /usr/local/bin/ss-server -c /etc/ss-conf/ss-PORT.json
+user = root
+autostart = true
+autoresart = true
+redirect_stderr = true
+stdout_logfile = /var/log/supervisor/ss-PORT.log

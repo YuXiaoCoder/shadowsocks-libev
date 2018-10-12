@@ -1,0 +1,79 @@
+#!/bin/bash
+
+function setup_ss_server() {
+    mkdir -p /etc/ss-conf
+
+    # Add the Lib library
+    ln -sf /usr/local/ss-server/lib/c-ares/* /usr/lib/
+    ln -sf /usr/local/ss-server/lib/libev/* /usr/lib/
+    ln -sf /usr/local/ss-server/lib/sodium/* /usr/lib/
+    ln -sf /usr/local/ss-server/lib/mbedtls/* /usr/lib/
+    ln -sf /usr/local/ss-server/lib/pcre/* /usr/lib/
+    ln -sf /usr/local/ss-server/bin/* /usr/local/bin/
+
+    # Optimization of VIM
+    sed -i "/^set tabstop/d" /etc/vim/vimrc
+    sed -i "/^set shiftwidth/d" /etc/vim/vimrc
+    sed -i "/^set softtabstop/d" /etc/vim/vimrc
+    sed -i "/^set nohlsearch/d" /etc/vim/vimrc
+    sed -i "/^set expandtab/d" /etc/vim/vimrc
+    echo "set tabstop=4" >> /etc/vim/vimrc
+    echo "set shiftwidth=4" >> /etc/vim/vimrc
+    echo "set softtabstop=4" >> /etc/vim/vimrc
+    echo "set nohlsearch" >> /etc/vim/vimrc
+    echo "set expandtab" >> /etc/vim/vimrc
+
+    # Optimization of Bash
+    echo "alias ls='ls --color=auto'" >> /etc/bash.bashrc
+    echo "alias ll='ls -alF'" >> /etc/bash.bashrc
+    echo "alias grep='grep --color=auto'" >> /etc/bash.bashrc
+    echo "alias egrep='egrep --color=auto'" >> /etc/bash.bashrc
+    echo "alias tailf='tail -f -n'" >> /etc/bash.bashrc
+    echo "alias status='supervisorctl status'" >> /etc/bash.bashrc
+
+    # Load the BBR module
+    modprobe tcp_bbr
+    echo "tcp_bbr" >> /etc/modules-load.d/modules.conf
+
+    # Optimization of kernel parameters
+    cp -f /usr/local/ss-server/conf/sysctl.d/ss-server.conf /etc/sysctl.d/
+    sysctl -qp /etc/sysctl.d/ss-server.conf
+
+    echo "*    soft    nofile    512000" >> /etc/security/limits.conf
+    echo "*    hard    nofile    1024000" >> /etc/security/limits.conf
+    echo "ulimit -SHn 1024000" >> /etc/profile
+
+    # Configuration bashrc
+    echo 'export PS1="\u@\[\e[1;93m\]\h\[\e[m\]:\w\\$\[\e[m\] "' >> /root/.bashrc
+
+    # Copy configuration file
+    mkdir -p /etc/ss-conf
+    cp -f /usr/local/ss-server/conf/ss-conf/* /etc/ss-conf/
+
+    cp -f /usr/local/ss-server/conf/supervisord.conf /etc/
+    mkdir -p /etc/supervisord.d/ /var/log/supervisor
+    cp -f /usr/local/ss-server/conf/supervisord.d/* /etc/supervisord.d/
+
+    # Configuration Systemd
+    cp -f /usr/local/ss-server/conf/systemd/system/supervisord.service /etc/systemd/system/
+    systemctl daemon-reload
+    systemctl --quiet enable supervisord.service
+
+    crontab -u root /usr/local/ss-server/cron.d/ss-server.cron
+}
+
+case "$1" in
+    configure)
+        setup_ss_server
+        ;;
+
+    abort-upgrade|abort-deconfigure|abort-remove)
+        ;;
+
+    *)
+        echo "$0 called with unknown argument '$1'" 1>&2
+        exit 1
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,13 @@
+Package: PKG_NAME
+Version: PKG_VER
+Maintainer: YuXiao <xiao.950901@gmail.com>
+Architecture: amd64
+Installed-Size: PKG_SIZE
+Pre-Depends:
+Depends:
+Recommends:
+Suggests:
+Priority: optional
+Homepage: www.xiaocoder.com
+Section: database
+Description: PKG_NAME By YuXiao

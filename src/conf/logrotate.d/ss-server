@@ -1,0 +1,10 @@
+/var/log/supervisor/*.log {
+    hourly
+    rotate 12
+    compress
+    delaycompress
+    nocopytruncate
+    size 10M
+    missingok
+    notifempty
+}
